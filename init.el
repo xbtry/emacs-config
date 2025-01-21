@@ -370,11 +370,74 @@
    (clojure . t)
    (julia . t)))
 (setq org-babel-python-command "python3")
+(require 'org-tempo)
+(add-to-list 'org-structure-template-alist '("sh" . "src shell"))
+(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("py" . "src python"))
+(add-to-list 'org-structure-template-alist '("c" . "src c"))
+(add-to-list 'org-structure-template-alist '("julia" . "src julia"))
+(add-to-list 'org-structure-template-alist '("rust" . "src rust"))
+(add-to-list 'org-structure-template-alist '("clj" . "src clojure"))
+
 (use-package org-bullets
   :after org
   :hook (org-mode . org-bullets-mode)
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+(defun auto-preview-latex-on-dollars (beg end length)
+  "Automatically trigger LaTeX preview when $$ is inserted."
+  (when (and (eq major-mode 'org-mode)
+             (not (minibufferp)) ; Avoid running in the minibuffer
+             (string= (buffer-substring-no-properties (- end 2) end) "\\)")) ;;i changed dollars with \)
+    (org-latex-preview)))
+
+;; Add the function to the after-change-functions hook
+(add-hook 'after-change-functions 'auto-preview-latex-on-dollars)
+
+;; If upper function is too slow, you can try to bind shortcut and trigger function manually.
+;; Remove below lines.
+
+;(defun insert-dollars-and-preview ()
+;  "Insert $$ and execute org-latex-preview."
+;  (interactive)
+;  (insert "$$")
+;  (org-latex-preview))
+;
+;(global-set-key (kbd "C-;") 'insert-dollars-and-preview)
+
+
+(setq org-latex-preview-ltxpng-directory "~/.emacs.d/tex-snapshots")
+(setq org-latex-packages-alist
+      '(("" "amsmath")
+        ("" "amsfonts")
+        ("" "amssymb")
+        ("T1" "fontenc")
+        ("" "graphicx")
+        ("" "xcolor")
+	("" "tikz")
+	))
+
+;; Example to scale LaTeX previews
+(setq org-latex-create-formula-image-program 'imagemagick)
+
+(defun my/org-latex-preview ()
+  "Preview LaTeX with larger font size"
+  (interactive)
+  (setq org-format-latex-options '(:scale 2.0))
+  (org-latex-preview))
+
+(defun my/org-latex-preview-setup ()
+  "Set keybinding for org-latex-preview in Org mode."
+  (local-set-key (kbd "C-;") 'org-latex-preview))
+
+(add-hook 'org-mode-hook 'my/org-latex-preview-setup)
+
+(setq org-startup-with-inline-images t)
+
+;; Or you can use this -v
+;(setq org-format-latex-options
+;      '(:foreground default :background default :scale 2.0 :html-foreground "black" :html-background "transparent"))
 
 (defun efs/org-mode-visual-fill ()
   (setq visual-fill-column-width 100
